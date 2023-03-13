@@ -8,11 +8,14 @@
     "clean": "rm -rf .turbo node_modules",
     "db:generate": "prisma generate",
     "db:push": "prisma db push --skip-generate",
-    "dev": "prisma studio --port 5556"
+    "generate": "npx zenstack generate",
+    "dev": "prisma studio --port 5556",
+    "zenstack:up": "pnpm install -D zenstack@latest && pnpm install @zenstackhq/runtime@latest @zenstackhq/trpc@latest"
   },
   "dependencies": {
     "@prisma/client": "^4.11.0",
-    "@zenstackhq/runtime": "1.0.0-alpha.62"
+    "@zenstackhq/runtime": "1.0.0-alpha.62",
+    "@zenstackhq/trpc": "1.0.0-alpha.62"
   },
   "devDependencies": {
     "prisma": "^4.11.0",

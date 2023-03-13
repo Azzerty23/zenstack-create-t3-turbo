@@ -26,12 +26,12 @@ model Account {
     type              String
     provider          String
     providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
     expires_at        Int?
     token_type        String?
     scope             String?
-    id_token          String? // @db.Text
+    id_token          String? @db.Text
     session_state     String?
     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -51,9 +51,16 @@ model User {
     name          String?
     email         String?   @unique
     emailVerified DateTime?
+    password      String    @password @omit
     image         String?
     accounts      Account[]
     sessions      Session[]
+
+    // everyone can signup, and user profile is also publicly readable
+    @@allow('create,read', true)
+    
+    // only the user can update or delete their own profile
+    @@allow('update,delete', auth() == this)
 }
 
 model VerificationToken {
