@@ -14,12 +14,12 @@
   },
   "dependencies": {
     "@prisma/client": "^4.11.0",
-    "@zenstackhq/runtime": "1.0.0-alpha.62",
-    "@zenstackhq/trpc": "1.0.0-alpha.62"
+    "@zenstackhq/runtime": "^1.0.0-alpha.73",
+    "@zenstackhq/trpc": "^1.0.0-alpha.73"
   },
   "devDependencies": {
     "prisma": "^4.11.0",
     "typescript": "^4.9.5",
-    "zenstack": "1.0.0-alpha.62"
+    "zenstack": "^1.0.0-alpha.73"
   }
 }

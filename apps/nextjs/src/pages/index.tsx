@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/router";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { toast } from "react-toastify";
 
-import { api, type RouterOutputs } from "~/utils/api";
+import { trpc, type RouterOutputs } from "~/utils/api";
 
 const PostCard: React.FC<{
-  post: RouterOutputs["post"]["all"][number];
+  post: RouterOutputs["post"]["findMany"][number];
   onPostDelete?: () => void;
 }> = ({ post, onPostDelete }) => {
   return (
@@ -29,16 +30,24 @@ const PostCard: React.FC<{
 };
 
 const CreatePostForm: React.FC = () => {
-  const utils = api.useContext();
+  const utils = trpc.useContext();
+  const { data: session } = useSession();
+  const currentUser = session?.user;
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const { mutate, error } = api.post.create.useMutation({
+  const { mutate, error } = trpc.post.create.useMutation({
     async onSuccess() {
       setTitle("");
       setContent("");
-      await utils.post.all.invalidate();
+      await utils.post.findMany.invalidate();
+    },
+    onError(err) {
+      console.log("prismaError:", err.data?.prismaError);
+      toast.error(
+        `error ${err.data?.code}:  ${JSON.stringify(err.data?.prismaError)}`,
+      );
     },
   });
 
@@ -55,7 +64,6 @@ const CreatePostForm: React.FC = () => {
           {error.data.zodError.fieldErrors.title}
         </span>
       )}
-      <Link href="/yoo">Hello</Link>
       <input
         className="mb-2 rounded bg-white/10 p-2 text-white"
         value={content}
@@ -70,9 +78,20 @@ const CreatePostForm: React.FC = () => {
       <button
         className="rounded bg-pink-400 p-2 font-bold"
         onClick={() => {
+          if (!currentUser) {
+            toast.error("You must be logged in to create a post");
+            return;
+          }
           mutate({
-            title,
-            content,
+            data: {
+              author: {
+                connect: {
+                  id: currentUser.id,
+                },
+              },
+              title,
+              content,
+            },
           });
         }}
       >
@@ -83,9 +102,9 @@ const CreatePostForm: React.FC = () => {
 };
 
 const Home: NextPage = () => {
-  const postQuery = api.post.all.useQuery();
+  const postQuery = trpc.post.findMany.useQuery({});
 
-  const deletePostMutation = api.post.delete.useMutation({
+  const deletePostMutation = trpc.post.delete.useMutation({
     onSettled: () => postQuery.refetch(),
   });
 
@@ -117,7 +136,9 @@ const Home: NextPage = () => {
                         <PostCard
                           key={p.id}
                           post={p}
-                          onPostDelete={() => deletePostMutation.mutate(p.id)}
+                          onPostDelete={() =>
+                            deletePostMutation.mutate({ where: { id: p.id } })
+                          }
                         />
                       );
                     })}
@@ -137,27 +158,33 @@ const Home: NextPage = () => {
 export default Home;
 
 const AuthShowcase: React.FC = () => {
-  const { data: session } = api.auth.getSession.useQuery();
-
-  const { data: secretMessage } = api.auth.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: !!session?.user },
-  );
+  const { data: session } = useSession();
+  const user = session?.user;
+  const router = useRouter();
 
   return (
     <div className="flex flex-col items-center justify-center gap-4">
-      {session?.user && (
+      {user && (
         <p className="text-center text-2xl text-white">
-          {session && <span>Logged in as {session?.user?.name}</span>}
-          {secretMessage && <span> - {secretMessage}</span>}
+          <span>Logged in as {user?.name}</span>
         </p>
       )}
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={session ? () => void signOut() : () => void signIn()}
-      >
-        {session ? "Sign out" : "Sign in"}
-      </button>
+      <div className="flex gap-4">
+        <button
+          className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+          onClick={session ? () => void signOut() : () => void signIn()}
+        >
+          {session ? "Sign out" : "Sign in"}
+        </button>
+        {!session && (
+          <button
+            className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
+            onClick={() => void router.push("/signup")}
+          >
+            Sign up
+          </button>
+        )}
+      </div>
     </div>
   );
 };

@@ -10,10 +10,23 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+plugin trpc {
+    provider = '@zenstackhq/trpc'
+    output = '../api/src/trpc/generated'
+}
+
 model Post {
-    id      String @id @default(cuid())
-    title   String
-    content String
+    id       String  @id @default(cuid())
+    title    String
+    content  String
+    author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+    authorId String
+
+    // everyone can read posts
+    @@allow('create,read', true)
+
+    // only the author can update or delete their own posts
+    @@allow('update,delete', author == auth())
 }
 
 // NextAuth.js Models
@@ -51,10 +64,11 @@ model User {
     name          String?
     email         String?   @unique
     emailVerified DateTime?
-    password      String    @password @omit
+    password      String?   @password @omit
     image         String?
     accounts      Account[]
     sessions      Session[]
+    Post          Post[]
 
     // everyone can signup, and user profile is also publicly readable
     @@allow('create,read', true)

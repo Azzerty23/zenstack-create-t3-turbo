@@ -1,4 +1,4 @@
-import { httpBatchLink, loggerLink } from "@trpc/client";
+import { TRPCClientError, httpBatchLink, loggerLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import superjson from "superjson";
 
@@ -11,8 +11,8 @@ const getBaseUrl = () => {
   return `http://localhost:3000`; // dev SSR should use localhost
 };
 
-export const api = createTRPCNext<AppRouter>({
-  config() {
+export const trpc = createTRPCNext<AppRouter>({
+  config({ ctx: _ctx }) {
     return {
       transformer: superjson,
       links: [
@@ -31,3 +31,9 @@ export const api = createTRPCNext<AppRouter>({
 });
 
 export { type RouterInputs, type RouterOutputs } from "@acme/api";
+
+export function isTRPCClientError(
+  error: unknown,
+): error is TRPCClientError<AppRouter> {
+  return error instanceof TRPCClientError;
+}
