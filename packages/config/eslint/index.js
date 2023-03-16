@@ -28,8 +28,22 @@ const config = {
       { prefer: "type-imports", fixStyle: "inline-type-imports" },
     ],
   },
-  ignorePatterns: ["**/*.config.js", "**/*.config.cjs", "packages/config/**"],
-  reportUnusedDisableDirectives: true,
+  ignorePatterns: [
+    "**/*.config.js",
+    "**/*.config.cjs",
+    "packages/config/**",
+    "**/generated/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/out/**",
+    "**/public/**",
+    "**/tmp/**",
+    "**/temp/**",
+    "**/cache/**",
+  ],
+  reportUnusedDisableDirectives: false,
 };
 
 module.exports = config;

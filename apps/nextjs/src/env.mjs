@@ -68,6 +68,8 @@ if (!!process.env.SKIP_ENV_VALIDATION == false) {
   );
 
   if (parsed.success === false) {
+    console.log("process.env.NODE_ENV : ", process.env.NODE_ENV);
+    console.log("process.env.DATABASE_URL : ", process.env.DATABASE_URL);
     console.error(
       "❌ Invalid environment variables:",
       parsed.error.flatten().fieldErrors,

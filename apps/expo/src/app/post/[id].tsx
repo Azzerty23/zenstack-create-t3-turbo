@@ -5,8 +5,8 @@ import { api } from "../../utils/api";
 
 const Post: React.FC = () => {
   const { id } = useSearchParams();
-  if (!id) throw new Error("unreachable");
-  const { data } = api.post.byId.useQuery({ id });
+  if (!id || Array.isArray(id)) throw new Error("unreachable");
+  const { data } = api.post.findFirst.useQuery({ where: { id } });
 
   if (!data) return <SplashScreen />;
 

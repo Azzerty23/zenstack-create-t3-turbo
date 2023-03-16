@@ -3,11 +3,12 @@ import { Button, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useRouter } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
+import { useSession } from "next-auth/react";
 
 import { api, type RouterOutputs } from "../utils/api";
 
 const PostCard: React.FC<{
-  post: RouterOutputs["post"]["all"][number];
+  post: RouterOutputs["post"]["findMany"][number];
   onDelete: () => void;
 }> = ({ post, onDelete }) => {
   const router = useRouter();
@@ -31,6 +32,8 @@ const PostCard: React.FC<{
 
 const CreatePost: React.FC = () => {
   const utils = api.useContext();
+  const { data: session } = useSession();
+  const currentUser = session?.user;
 
   const [title, setTitle] = React.useState("");
   const [content, setContent] = React.useState("");
@@ -39,7 +42,7 @@ const CreatePost: React.FC = () => {
     async onSuccess() {
       setTitle("");
       setContent("");
-      await utils.post.all.invalidate();
+      await utils.post.findMany.invalidate();
     },
   });
 
@@ -73,8 +76,15 @@ const CreatePost: React.FC = () => {
         className="rounded bg-pink-400 p-2"
         onPress={() => {
           mutate({
-            title,
-            content,
+            data: {
+              title,
+              content,
+              author: {
+                connect: {
+                  id: currentUser?.id,
+                },
+              },
+            },
           });
         }}
       >
@@ -85,7 +95,7 @@ const CreatePost: React.FC = () => {
 };
 
 const Index = () => {
-  const postQuery = api.post.all.useQuery();
+  const postQuery = api.post.findMany.useQuery({});
 
   const deletePostMutation = api.post.delete.useMutation({
     onSettled: () => postQuery.refetch(),
@@ -119,7 +129,9 @@ const Index = () => {
           renderItem={(p) => (
             <PostCard
               post={p.item}
-              onDelete={() => deletePostMutation.mutate(p.item.id)}
+              onDelete={() =>
+                deletePostMutation.mutate({ where: { id: p.item.id } })
+              }
             />
           )}
         />
